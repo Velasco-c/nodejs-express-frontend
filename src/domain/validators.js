@@ -150,6 +150,33 @@ export function validateVenta( valores ){
   return resultado( errores );
 }
 
+export function validatePedido( valores ){
+  const errores = {};
+  if( !Array.isArray( valores.libros ) || valores.libros.length === 0 || valores.libros.length > 30 ){
+    errores.libros = 'El pedido debe incluir entre 1 y 30 libros';
+    return resultado( errores );
+  }
+  valores.libros.forEach( ( item, indice ) => {
+    if( !esTexto( item.codigo ) ) errores[`libros.${ indice }.codigo`] = 'Selecciona un libro válido';
+    if( !esEntero( item.cantidad ) || Number( item.cantidad ) <= 0 || Number( item.cantidad ) > 100 ){
+      errores[`libros.${ indice }.cantidad`] = 'La cantidad debe ser un entero entre 1 y 100';
+    }
+  });
+  return resultado( errores );
+}
+
+export function validateSolicitudPrestamo( valores ){
+  const errores = {};
+  if( !esTexto( valores.codigoLibro ) ) errores.codigoLibro = 'Selecciona un libro válido';
+  if( !esFechaValida( valores.fechaTentativaDevolucion ) ){
+    errores.fechaTentativaDevolucion = 'La fecha debe ser válida y tener formato AAAA-MM-DD';
+  }
+  else if( valores.fechaTentativaDevolucion < hoyISO() ){
+    errores.fechaTentativaDevolucion = 'La fecha tentativa no puede ser anterior a hoy';
+  }
+  return resultado( errores );
+}
+
 export function validateBusqueda( valor ){
   const errores = {};
   if( !esTexto( valor ) ) errores.q = 'Escribe un título, autor o ISBN para buscar';

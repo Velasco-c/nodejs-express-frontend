@@ -85,16 +85,16 @@ export function errorState({ title = 'No se pudo cargar la información', messag
   `;
 }
 
-function urlConPagina( basePath, query, pagina ){
+function urlConPagina( basePath, query, pagina, pageParam = 'pagina' ){
   const parametros = new URLSearchParams();
   for( const [ clave, valor ] of Object.entries( query ?? {} ) ){
     if( valor !== undefined && valor !== null && valor !== '' ) parametros.set( clave, String( valor ) );
   }
-  parametros.set( 'pagina', String( pagina ) );
+  parametros.set( pageParam, String( pagina ) );
   return `${ basePath }?${ parametros.toString() }`;
 }
 
-export function pagination({ total = 0, pagina = 1, limite = 10, basePath = '', query = {} } = {}){
+export function pagination({ total = 0, pagina = 1, limite = 10, basePath = '', query = {}, pageParam = 'pagina' } = {}){
   const paginas = totalPaginas( total, limite );
   const actual = Math.max( 1, Number( pagina ) || 1 );
 
@@ -111,7 +111,7 @@ export function pagination({ total = 0, pagina = 1, limite = 10, basePath = '', 
       </p>
       <div class="pagination-controls">
         <a class="page-btn ${ actual <= 1 ? 'is-disabled' : '' }"
-           href="${ urlConPagina( basePath, query, Math.max( 1, actual - 1 ) ) }"
+           href="${ urlConPagina( basePath, query, Math.max( 1, actual - 1 ), pageParam ) }"
            data-link
            ${ actual <= 1 ? raw( 'aria-disabled="true" tabindex="-1"' ) : '' }
            aria-label="Página anterior">
@@ -119,12 +119,12 @@ export function pagination({ total = 0, pagina = 1, limite = 10, basePath = '', 
         </a>
         ${ numeros.map( numero => html`
           <a class="page-btn ${ numero === actual ? 'is-current' : '' }"
-             href="${ urlConPagina( basePath, query, numero ) }"
+             href="${ urlConPagina( basePath, query, numero, pageParam ) }"
              data-link
              ${ numero === actual ? raw( 'aria-current="page"' ) : '' }>${ numero }</a>
         ` ) }
         <a class="page-btn ${ actual >= paginas ? 'is-disabled' : '' }"
-           href="${ urlConPagina( basePath, query, Math.min( paginas, actual + 1 ) ) }"
+           href="${ urlConPagina( basePath, query, Math.min( paginas, actual + 1 ), pageParam ) }"
            data-link
            ${ actual >= paginas ? raw( 'aria-disabled="true" tabindex="-1"' ) : '' }
            aria-label="Página siguiente">

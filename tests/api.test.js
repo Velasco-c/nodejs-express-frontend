@@ -163,6 +163,38 @@ test( 'ventas api registra varias líneas y consulta compras', async () => {
   assert.equal( fetchFalso.llamadas[1].url, 'https://api.test/ventas/mis-compras?pagina=1&limite=5' );
 });
 
+test( 'ventas api crea, consulta y resuelve pedidos de compra', async () => {
+  const { ventas, fetchFalso } = crearApis( () => respuestaJson( { id: 'O001', estado: 'pendiente' }, { headers: { 'X-Total-Count': '1' } } ) );
+  await ventas.crearPedido([ { codigo: ' L001 ', cantidad: '2' } ]);
+  assert.equal( fetchFalso.llamadas[0].url, 'https://api.test/ventas/pedidos' );
+  assert.deepEqual( JSON.parse( fetchFalso.llamadas[0].opciones.body ), { libros: [ { codigo: 'L001', cantidad: 2 } ] } );
+
+  const mios = await ventas.misPedidos({ pagina: 2, limite: 4 });
+  assert.equal( mios.total, 1 );
+  assert.equal( fetchFalso.llamadas[1].url, 'https://api.test/ventas/pedidos/mis-pedidos?pagina=2&limite=4' );
+  await ventas.listarPedidos();
+  assert.equal( fetchFalso.llamadas[2].url, 'https://api.test/ventas/pedidos?pagina=1&limite=10' );
+  await ventas.resolverPedido( 'O001', 'confirmar' );
+  assert.equal( fetchFalso.llamadas[3].url, 'https://api.test/ventas/pedidos/O001/confirmar' );
+  assert.equal( fetchFalso.llamadas[3].opciones.method, 'PUT' );
+});
+
+test( 'prestamos api crea, lista y resuelve solicitudes', async () => {
+  const { prestamos, fetchFalso } = crearApis( () => respuestaJson( { id: 'SP001', estado: 'pendiente' }, { headers: { 'X-Total-Count': '1' } } ) );
+  await prestamos.solicitar({ codigoLibro: ' L001 ', fechaTentativaDevolucion: '2099-12-01' });
+  assert.deepEqual( JSON.parse( fetchFalso.llamadas[0].opciones.body ), {
+    codigoLibro: 'L001', fechaTentativaDevolucion: '2099-12-01'
+  });
+  assert.equal( fetchFalso.llamadas[0].url, 'https://api.test/prestamos/solicitudes' );
+
+  await prestamos.misSolicitudes();
+  assert.equal( fetchFalso.llamadas[1].url, 'https://api.test/prestamos/solicitudes/mis-solicitudes?pagina=1&limite=10' );
+  await prestamos.listarSolicitudes();
+  assert.equal( fetchFalso.llamadas[2].url, 'https://api.test/prestamos/solicitudes?pagina=1&limite=10' );
+  await prestamos.resolverSolicitud( 'SP001', 'aprobar' );
+  assert.equal( fetchFalso.llamadas[3].url, 'https://api.test/prestamos/solicitudes/SP001/aprobar' );
+});
+
 test( 'inventario api envía el umbral', async () => {
   const { inventario, fetchFalso } = crearApis( () => respuestaJson({ totalTitulos: 51, libros: [] }) );
   const resumen = await inventario.resumen( 5 );

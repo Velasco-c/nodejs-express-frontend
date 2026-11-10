@@ -7,6 +7,11 @@ import { librosPage } from '../src/UI/pages/libros.page.js';
 import { catalogoPage } from '../src/UI/pages/catalogo.page.js';
 import { historialPage } from '../src/UI/pages/historial.page.js';
 import { misComprasPage } from '../src/UI/pages/mis-compras.page.js';
+import { carritoPage } from '../src/UI/pages/carrito.page.js';
+import { pedidosPage } from '../src/UI/pages/pedidos.page.js';
+import { misPedidosPage } from '../src/UI/pages/mis-pedidos.page.js';
+import { misSolicitudesPage } from '../src/UI/pages/mis-solicitudes.page.js';
+import { prestamosPage } from '../src/UI/pages/prestamos.page.js';
 import { notFoundPage } from '../src/UI/pages/not-found.page.js';
 import { renderAppLayout } from '../src/UI/components/layout.js';
 import { pagination } from '../src/UI/components/ui.js';
@@ -138,6 +143,67 @@ test( 'historial y compras muestran estados y totales', async () => {
   assert.match( compras, /135/ );
 });
 
+test( 'cliente ve carrito, pedido pendiente y solicitud de préstamo', async () => {
+  const ctx = {
+    config: { pageSize: 10 }, query: {},
+    services: {
+      carrito: { items: () => [ { codigo: 'L001', cantidad: 2 } ] },
+      libros: { async obtener(){ return { codigo: 'L001', titulo: 'Libro de prueba', precio: 25, stock: 4 }; } },
+      ventas: {
+        async misPedidos(){ return { total: 1, items: [ {
+          id: 'O001', fecha: '2026-11-09', estado: 'pendiente', total: 50,
+          items: [ { codigo: 'L001', titulo: 'Libro de prueba', cantidad: 2 } ]
+        } ] }; }
+      },
+      prestamos: {
+        async misSolicitudes(){ return { total: 1, items: [ {
+          id: 'SP001', codigoLibro: 'L001', titulo: 'Libro de prueba', fechaSolicitud: '2026-11-09',
+          fechaTentativaDevolucion: '2099-12-01', estado: 'pendiente'
+        } ] }; }
+      }
+    }
+  };
+
+  const carrito = renderizar( await carritoPage.render( ctx ) );
+  assert.match( carrito, /Libro de prueba/ );
+  assert.match( carrito, /Enviar pedido/ );
+  assert.match( carrito, /No se cobra en línea/ );
+
+  const pedidos = renderizar( await misPedidosPage.render( ctx ) );
+  assert.match( pedidos, /O001/ );
+  assert.match( pedidos, /Pendiente de confirmación/ );
+
+  const solicitudes = renderizar( await misSolicitudesPage.render( ctx ) );
+  assert.match( solicitudes, /SP001/ );
+  assert.match( solicitudes, /Pendiente de aprobación/ );
+});
+
+test( 'administración ve pedidos y solicitudes para resolver', async () => {
+  const ctx = {
+    config: { pageSize: 10 }, query: {},
+    services: {
+      ventas: { async listarPedidos(){ return { total: 1, items: [ {
+        id: 'O001', identificacionCliente: '1001', fecha: '2026-11-09', estado: 'pendiente', total: 50,
+        items: [ { codigo: 'L001', titulo: 'Libro de prueba', cantidad: 2 } ]
+      } ] }; } },
+      prestamos: {
+        async listar(){ return { total: 0, items: [] }; },
+        async listarSolicitudes(){ return { total: 1, items: [ {
+          id: 'SP001', codigoLibro: 'L001', titulo: 'Libro de prueba', identificacionUsuario: '1001',
+          fechaSolicitud: '2026-11-09', fechaTentativaDevolucion: '2099-12-01', estado: 'pendiente'
+        } ] }; }
+      }
+    }
+  };
+  const pedidos = renderizar( await pedidosPage.render( ctx ) );
+  assert.match( pedidos, /data-resolve-order="confirmar"/ );
+  assert.match( pedidos, /Confirmar/ );
+
+  const prestamos = renderizar( await prestamosPage.render( ctx ) );
+  assert.match( prestamos, /data-resolve-loan-request="aprobar"/ );
+  assert.match( prestamos, /Rechazar/ );
+});
+
 test( 'layout administrativo y de cliente muestran navegación correcta', () => {
   const admin = renderizar( renderAppLayout({
     session: { role: 'admin', usuario: { nombre: 'Administrador', identificacion: 'admin' } },
@@ -159,10 +225,20 @@ test( 'layout administrativo y de cliente muestran navegación correcta', () => 
   }) );
   assert.match( cliente, /href="\/catalogo"/ );
   assert.match( cliente, /href="\/mis-prestamos"/ );
+  assert.match( cliente, /href="\/catalogo\/carrito"/ );
+  assert.match( cliente, /href="\/mis-pedidos"/ );
+  assert.match( cliente, /href="\/mis-solicitudes"/ );
   assert.match( cliente, /href="\/perfil"/ );
   assert.doesNotMatch( cliente, /href="\/admin\/libros"/ );
   assert.match( cliente, /Ana Pérez/ );
   assert.match( cliente, /Cliente/ );
+
+  const carrito = renderizar( renderAppLayout({
+    session: { role: 'usuario', usuario: { nombre: 'Ana Pérez', identificacion: '1001' } },
+    rutaActual: '/catalogo/carrito', title: 'Carrito', content: html`<p>Carrito</p>`
+  }) );
+  assert.match( carrito, /href="\/catalogo\/carrito"[^>]*class="nav-item is-active"/ );
+  assert.match( carrito, /href="\/catalogo"[\s\S]{0,50}class="nav-item "/ );
 });
 
 test( 'paginación incluye resumen, página actual y conserva filtros', () => {

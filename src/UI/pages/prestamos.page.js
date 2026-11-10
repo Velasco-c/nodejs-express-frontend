@@ -1,7 +1,7 @@
 import { html } from '../utils/html.js';
-import { emptyState, field, loanBadge, pageHeader, pagination } from '../components/ui.js';
+import { badge, emptyState, field, loanBadge, pageHeader, pagination } from '../components/ui.js';
 import { icon } from '../components/icons.js';
-import { openModal } from '../components/modal.js';
+import { confirmAction, openModal } from '../components/modal.js';
 import { bloquearBoton, datosFormulario, mostrarErroresFormulario } from '../utils/dom.js';
 import { ValidationError, getErrorMessage } from '../../domain/errors.js';
 import { formatDate, hoyISO } from '../../domain/formatters.js';
@@ -57,8 +57,12 @@ function formularioDevolucion( prestamo ){
 export const prestamosPage = {
   async render( ctx ){
     const pagina = Math.max( 1, Number( ctx.query.pagina ) || 1 );
+    const paginaSolicitudes = Math.max( 1, Number( ctx.query.solicitudesPagina ) || 1 );
     const limite = ctx.config.pageSize;
-    const resultado = await ctx.services.prestamos.listar({ pagina, limite });
+    const [resultado, solicitudes] = await Promise.all([
+      ctx.services.prestamos.listar({ pagina, limite }),
+      ctx.services.prestamos.listarSolicitudes({ pagina: paginaSolicitudes, limite })
+    ]);
     const activos = resultado.items.filter( prestamo => !prestamo.fechaDevolucion ).length;
 
     return html`
@@ -125,7 +129,51 @@ export const prestamosPage = {
             </div>
           ` }
 
-        ${ pagination({ total: resultado.total, pagina, limite, basePath: RUTAS.ADMIN_PRESTAMOS }) }
+        ${ pagination({
+          total: resultado.total,
+          pagina,
+          limite,
+          basePath: RUTAS.ADMIN_PRESTAMOS,
+          query: { ...( ctx.query.solicitudesPagina ? { solicitudesPagina: ctx.query.solicitudesPagina } : {} ) }
+        }) }
+      </section>
+
+      <section class="card section-spaced">
+        <header class="card-head">
+          <div><h2>Solicitudes de clientes</h2><p>El stock solo se descuenta cuando apruebas una solicitud.</p></div>
+          <span class="header-chip">${ solicitudes.items.filter( solicitud => solicitud.estado === 'pendiente' ).length } pendientes en esta página</span>
+        </header>
+        ${ solicitudes.items.length === 0
+          ? emptyState({ iconName: 'clock', title: 'Sin solicitudes pendientes', message: 'Las solicitudes de clientes aparecerán aquí.' })
+          : html`
+            <div class="table-wrap"><table class="data-table">
+              <thead><tr><th>Solicitud</th><th>Libro</th><th>Cliente</th><th>Enviada</th><th>Devolución tentativa</th><th>Estado</th><th>Acciones</th></tr></thead>
+              <tbody>${ solicitudes.items.map( solicitud => html`
+                <tr>
+                  <td><span class="mono">${ solicitud.id }</span></td>
+                  <td><div class="cell-stack"><strong>${ solicitud.titulo ?? solicitud.codigoLibro }</strong><span class="mono">${ solicitud.codigoLibro }</span></div></td>
+                  <td><span class="mono">${ solicitud.identificacionUsuario }</span></td>
+                  <td>${ formatDate( solicitud.fechaSolicitud ) }</td>
+                  <td>${ formatDate( solicitud.fechaTentativaDevolucion ) }</td>
+                  <td>${ badge( solicitud.estado === 'aprobada' ? 'Aprobada' : solicitud.estado === 'rechazada' ? 'Rechazada' : 'Pendiente', solicitud.estado === 'aprobada' ? 'success' : solicitud.estado === 'rechazada' ? 'danger' : 'warning' ) }</td>
+                  <td><div class="row-actions">
+                    ${ solicitud.estado === 'pendiente' ? html`
+                      <button type="button" class="btn btn-primary btn-sm" data-resolve-loan-request="aprobar" data-request-id="${ solicitud.id }">${ icon( 'check', 15 ) } Aprobar</button>
+                      <button type="button" class="btn btn-ghost btn-sm" data-resolve-loan-request="rechazar" data-request-id="${ solicitud.id }">Rechazar</button>
+                    ` : solicitud.prestamoId ? html`<span class="mono">${ solicitud.prestamoId }</span>` : '—' }
+                  </div></td>
+                </tr>
+              ` ) }</tbody>
+            </table></div>
+          ` }
+        ${ pagination({
+          total: solicitudes.total,
+          pagina: paginaSolicitudes,
+          limite,
+          basePath: RUTAS.ADMIN_PRESTAMOS,
+          query: { ...( ctx.query.pagina ? { pagina: ctx.query.pagina } : {} ) },
+          pageParam: 'solicitudesPagina'
+        }) }
       </section>
     `;
   },
@@ -224,7 +272,34 @@ export const prestamosPage = {
       });
     }
 
-    const manejarClick = evento => {
+    const manejarClick = async evento => {
+      const resolver = evento.target.closest( '[data-resolve-loan-request]' );
+      if( resolver ){
+        const accion = resolver.dataset.resolveLoanRequest;
+        const confirmado = await confirmAction({
+          title: accion === 'aprobar' ? 'Aprobar solicitud' : 'Rechazar solicitud',
+          message: accion === 'aprobar'
+            ? 'Se creará el préstamo y se descontará una unidad del inventario. ¿Continuar?'
+            : 'La solicitud quedará marcada como rechazada. ¿Continuar?',
+          confirmLabel: accion === 'aprobar' ? 'Aprobar préstamo' : 'Rechazar solicitud',
+          tone: accion === 'aprobar' ? 'primary' : 'danger'
+        });
+        if( !confirmado ) return;
+        resolver.disabled = true;
+        try {
+          await ctx.services.prestamos.resolverSolicitud( resolver.dataset.requestId, accion );
+          ctx.toast( accion === 'aprobar' ? 'El préstamo fue creado y el stock actualizado.' : 'La solicitud fue rechazada.', {
+            type: 'success', title: accion === 'aprobar' ? 'Solicitud aprobada' : 'Solicitud rechazada'
+          });
+          await ctx.refresh();
+        }
+        catch( error ){
+          resolver.disabled = false;
+          ctx.toast( getErrorMessage( error ), { type: 'error', title: 'No se pudo resolver la solicitud' } );
+        }
+        return;
+      }
+
       if( evento.target.closest( '[data-new-loan]' ) ){
         abrirPrestamo();
         return;

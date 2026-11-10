@@ -198,6 +198,52 @@
   padding-top: 13px;
 }
 
+.book-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 9px;
+}
+
+.book-card-actions .btn {
+  flex: 1 1 auto;
+}
+
+.cart-checkout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px 20px;
+  padding: 18px 20px;
+  border-top: 1px solid var(--line);
+}
+
+.cart-checkout > p:first-child {
+  margin-right: auto;
+  font-size: 15px;
+}
+
+.cart-checkout .field-help {
+  max-width: 300px;
+}
+
+.cart-quantity {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.cart-quantity .icon-btn {
+  width: 29px;
+  height: 29px;
+  font-size: 18px;
+}
+
+.section-spaced {
+  margin-top: 22px;
+}
+
 .catalog-detail {
   display: grid;
   grid-template-columns: 150px minmax(0, 1fr);
