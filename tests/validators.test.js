@@ -9,7 +9,9 @@ import {
   validateLogin,
   validatePerfil,
   validatePrestamo,
+  validatePedido,
   validateRegistro,
+  validateSolicitudPrestamo,
   validateVenta
 } from '../src/domain/validators.js';
 
@@ -148,6 +150,16 @@ test( 'venta exige cliente, al menos un libro y cantidades positivas', () => {
     libros: [ { codigo: 'L1', cantidad: 2 }, { codigo: 'L1', cantidad: 1 } ]
   });
   assert.equal( valida.valid, true );
+});
+
+test( 'pedido valida cantidades y solicitud de préstamo requiere fecha futura válida', () => {
+  assert.equal( validatePedido({ libros: [] }).valid, false );
+  assert.equal( validatePedido({ libros: [ { codigo: 'L1', cantidad: 101 } ] }).valid, false );
+  assert.equal( validatePedido({ libros: [ { codigo: 'L1', cantidad: 2 } ] }).valid, true );
+
+  assert.equal( validateSolicitudPrestamo({ codigoLibro: '', fechaTentativaDevolucion: '2099-12-01' }).valid, false );
+  assert.equal( validateSolicitudPrestamo({ codigoLibro: 'L1', fechaTentativaDevolucion: '2099-02-30' }).valid, false );
+  assert.equal( validateSolicitudPrestamo({ codigoLibro: 'L1', fechaTentativaDevolucion: '2099-12-01' }).valid, true );
 });
 
 test( 'búsqueda exige texto no vacío y fechas ISO válidas', () => {

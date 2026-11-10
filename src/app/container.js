@@ -13,6 +13,7 @@ import { createUsuariosService } from '../application/usuarios.service.js';
 import { createPrestamosService } from '../application/prestamos.service.js';
 import { createVentasService } from '../application/ventas.service.js';
 import { createInventarioService } from '../application/inventario.service.js';
+import { createCarritoService } from '../application/carrito.service.js';
 import { configureFormatters } from '../domain/formatters.js';
 
 export function createContainer({
@@ -54,7 +55,11 @@ export function createContainer({
     usuarios: createUsuariosService({ usuariosApi: apis.usuarios }),
     prestamos: createPrestamosService({ prestamosApi: apis.prestamos }),
     ventas: createVentasService({ ventasApi: apis.ventas }),
-    inventario: createInventarioService({ inventarioApi: apis.inventario })
+    inventario: createInventarioService({ inventarioApi: apis.inventario }),
+    carrito: createCarritoService({
+      storage: storage ?? globalThis.localStorage,
+      getUserId: () => sessionStore.read()?.usuario?.identificacion ?? 'anonimo'
+    })
   };
 
   return {

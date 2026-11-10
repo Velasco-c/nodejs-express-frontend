@@ -221,7 +221,11 @@ test( 'prestamos service valida datos y propaga operaciones', async () => {
       listar: async p => { llamadas.push([ 'listar', p ]); return { items: [], total: 0 }; },
       registrar: async d => { llamadas.push([ 'registrar', d ]); return { id: 'P001' }; },
       devolver: async ( id, fecha ) => { llamadas.push([ 'devolver', id, fecha ]); return {}; },
-      historial: async p => { llamadas.push([ 'historial', p ]); return { items: [], total: 0 }; }
+      historial: async p => { llamadas.push([ 'historial', p ]); return { items: [], total: 0 }; },
+      solicitar: async d => { llamadas.push([ 'solicitar', d ]); return { id: 'SP001' }; },
+      listarSolicitudes: async p => { llamadas.push([ 'listarSolicitudes', p ]); return { items: [], total: 0 }; },
+      misSolicitudes: async p => { llamadas.push([ 'misSolicitudes', p ]); return { items: [], total: 0 }; },
+      resolverSolicitud: async ( id, accion ) => { llamadas.push([ 'resolverSolicitud', id, accion ]); return {}; }
     }
   });
 
@@ -244,6 +248,12 @@ test( 'prestamos service valida datos y propaga operaciones', async () => {
   await assert.rejects( () => service.devolver( 'P001', '2026-02-30' ), ValidationError );
   await service.devolver( 'P001', '2026-11-05' );
   assert.deepEqual( llamadas.at( -1 ), [ 'devolver', 'P001', '2026-11-05' ] );
+
+  await assert.rejects( () => service.solicitar({ codigoLibro: 'L001', fechaTentativaDevolucion: '2026-02-30' }), ValidationError );
+  await service.solicitar({ codigoLibro: ' L001 ', fechaTentativaDevolucion: '2099-12-01' });
+  assert.deepEqual( llamadas.at( -1 ), [ 'solicitar', { codigoLibro: 'L001', fechaTentativaDevolucion: '2099-12-01' } ] );
+  await service.resolverSolicitud( 'SP001', 'aprobar' );
+  assert.deepEqual( llamadas.at( -1 ), [ 'resolverSolicitud', 'SP001', 'aprobar' ] );
 });
 
 test( 'ventas service valida, normaliza y delega', async () => {
@@ -252,7 +262,11 @@ test( 'ventas service valida, normaliza y delega', async () => {
     ventasApi: {
       listar: async p => { llamadas.push([ 'listar', p ]); return { items: [], total: 0 }; },
       registrar: async d => { llamadas.push([ 'registrar', d ]); return { id: 'V001' }; },
-      misCompras: async p => { llamadas.push([ 'misCompras', p ]); return { items: [], total: 0 }; }
+      misCompras: async p => { llamadas.push([ 'misCompras', p ]); return { items: [], total: 0 }; },
+      crearPedido: async libros => { llamadas.push([ 'crearPedido', libros ]); return { id: 'O001' }; },
+      misPedidos: async p => { llamadas.push([ 'misPedidos', p ]); return { items: [], total: 0 }; },
+      listarPedidos: async p => { llamadas.push([ 'listarPedidos', p ]); return { items: [], total: 0 }; },
+      resolverPedido: async ( id, accion ) => { llamadas.push([ 'resolverPedido', id, accion ]); return {}; }
     }
   });
 
@@ -267,6 +281,12 @@ test( 'ventas service valida, normaliza y delega', async () => {
     identificacionCliente: '1001',
     libros: [ { codigo: 'L1', cantidad: 2 } ]
   });
+
+  await assert.rejects( () => service.crearPedido({ libros: [] }), ValidationError );
+  await service.crearPedido({ libros: [ { codigo: ' L2 ', cantidad: '3' } ] });
+  assert.deepEqual( llamadas.at( -1 ), [ 'crearPedido', [ { codigo: 'L2', cantidad: 3 } ] ] );
+  await service.resolverPedido( 'O001', 'confirmar' );
+  assert.deepEqual( llamadas.at( -1 ), [ 'resolverPedido', 'O001', 'confirmar' ] );
 });
 
 test( 'inventario service normaliza el umbral', async () => {

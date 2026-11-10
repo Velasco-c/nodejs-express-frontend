@@ -7,6 +7,7 @@ const NAV_ADMIN = [
   { ruta: RUTAS.ADMIN, etiqueta: 'Panel', icono: 'dashboard' },
   { ruta: RUTAS.ADMIN_LIBROS, etiqueta: 'Libros', icono: 'book' },
   { ruta: RUTAS.ADMIN_USUARIOS, etiqueta: 'Clientes', icono: 'users' },
+  { ruta: RUTAS.ADMIN_PEDIDOS, etiqueta: 'Pedidos', icono: 'shopping-bag' },
   { ruta: RUTAS.ADMIN_PRESTAMOS, etiqueta: 'Préstamos', icono: 'repeat' },
   { ruta: RUTAS.ADMIN_VENTAS, etiqueta: 'Ventas', icono: 'cart' },
   { ruta: RUTAS.ADMIN_INVENTARIO, etiqueta: 'Inventario', icono: 'boxes' }
@@ -14,13 +15,16 @@ const NAV_ADMIN = [
 
 const NAV_CLIENTE = [
   { ruta: RUTAS.CATALOGO, etiqueta: 'Catálogo', icono: 'library' },
+  { ruta: RUTAS.CARRITO, etiqueta: 'Carrito', icono: 'cart' },
+  { ruta: RUTAS.MIS_PEDIDOS, etiqueta: 'Mis pedidos', icono: 'shopping-bag' },
+  { ruta: RUTAS.MIS_SOLICITUDES, etiqueta: 'Solicitudes', icono: 'clock' },
   { ruta: RUTAS.MIS_PRESTAMOS, etiqueta: 'Mis préstamos', icono: 'repeat' },
   { ruta: RUTAS.MIS_COMPRAS, etiqueta: 'Mis compras', icono: 'shopping-bag' },
   { ruta: RUTAS.PERFIL, etiqueta: 'Mi perfil', icono: 'user' }
 ];
 
 const esActiva = ( rutaActual, ruta ) => {
-  if( ruta === RUTAS.ADMIN ) return rutaActual === ruta;
+  if( ruta === RUTAS.ADMIN || ruta === RUTAS.CATALOGO ) return rutaActual === ruta;
   return rutaActual === ruta || rutaActual.startsWith( `${ ruta }/` );
 };
 

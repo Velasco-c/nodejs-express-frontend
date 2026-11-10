@@ -16,13 +16,17 @@ export const RUTAS = Object.freeze({
   ADMIN: '/admin',
   ADMIN_LIBROS: '/admin/libros',
   ADMIN_USUARIOS: '/admin/usuarios',
+  ADMIN_PEDIDOS: '/admin/pedidos',
   ADMIN_PRESTAMOS: '/admin/prestamos',
   ADMIN_VENTAS: '/admin/ventas',
   ADMIN_INVENTARIO: '/admin/inventario',
   CATALOGO: '/catalogo',
+  CARRITO: '/catalogo/carrito',
   PERFIL: '/perfil',
   MIS_PRESTAMOS: '/mis-prestamos',
-  MIS_COMPRAS: '/mis-compras'
+  MIS_COMPRAS: '/mis-compras',
+  MIS_PEDIDOS: '/mis-pedidos',
+  MIS_SOLICITUDES: '/mis-solicitudes'
 });
 
 export const MENSAJES = Object.freeze({

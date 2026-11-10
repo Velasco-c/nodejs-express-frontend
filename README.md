@@ -38,11 +38,12 @@ domain (reglas, sesión, permisos, validaciones y formato)
 ## Funcionalidades
 
 - Clientes: registro, inicio de sesión, perfil, catálogo, historial de préstamos y compras.
-- Administración: panel, gestión de libros y clientes, registro y consulta de préstamos y ventas, e inventario.
-- Ventas de varios libros, validación de cantidades y consulta de compras personales, según los endpoints disponibles en la API.
-- Préstamos y devoluciones gestionados por administración; el cliente puede consultar su historial.
+- Clientes: catálogo con carrito por cuenta, envío de pedidos de compra y consulta de su estado; solicitudes de préstamo con fecha tentativa e historial de solicitudes.
+- Administración: panel, gestión de libros y clientes, registro y consulta de préstamos y ventas, pedidos de compra pendientes, aprobación o rechazo de préstamos e inventario.
+- Al enviar un pedido se guarda una cotización, sin pago ni reserva de inventario. Administración confirma disponibilidad y entrega; al confirmar, el backend registra la venta en una transacción.
+- Las solicitudes de préstamo tampoco reservan inventario. Al aprobar, administración crea el préstamo y descuenta el ejemplar en una transacción; la devolución se registra desde el panel.
 
-Las compras y préstamos para clientes requieren endpoints que la API actual todavía no expone. Para ofrecer carrito con pago/confirmación o solicitudes de préstamo desde la cuenta del cliente, esos casos de uso deben incorporarse primero al backend y después conectarse mediante adaptadores en `src/infrastructure/api/` y servicios en `src/application/`.
+No se procesa pago en línea. La confirmación administrativa registra la operación para pago o entrega fuera de la aplicación.
 
 ## Comandos
 
