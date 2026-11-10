@@ -10,6 +10,10 @@ import { catalogoPage } from './pages/catalogo.page.js';
 import { perfilPage } from './pages/perfil.page.js';
 import { historialPage } from './pages/historial.page.js';
 import { misComprasPage } from './pages/mis-compras.page.js';
+import { carritoPage } from './pages/carrito.page.js';
+import { pedidosPage } from './pages/pedidos.page.js';
+import { misPedidosPage } from './pages/mis-pedidos.page.js';
+import { misSolicitudesPage } from './pages/mis-solicitudes.page.js';
 import { notFoundPage } from './pages/not-found.page.js';
 import { ROLES, RUTAS } from '../domain/constants.js';
 import { homePathForRole } from '../domain/authorization.js';
@@ -76,6 +80,13 @@ export const routes = [
     page: ventasPage
   },
   {
+    path: RUTAS.ADMIN_PEDIDOS,
+    title: 'Pedidos de clientes',
+    layout: 'app',
+    roles: ADMIN,
+    page: pedidosPage
+  },
+  {
     path: RUTAS.ADMIN_INVENTARIO,
     title: 'Inventario',
     layout: 'app',
@@ -88,6 +99,13 @@ export const routes = [
     layout: 'app',
     roles: CLIENTE,
     page: catalogoPage
+  },
+  {
+    path: RUTAS.CARRITO,
+    title: 'Carrito',
+    layout: 'app',
+    roles: CLIENTE,
+    page: carritoPage
   },
   {
     path: RUTAS.PERFIL,
@@ -109,6 +127,20 @@ export const routes = [
     layout: 'app',
     roles: CLIENTE,
     page: misComprasPage
+  },
+  {
+    path: RUTAS.MIS_PEDIDOS,
+    title: 'Mis pedidos',
+    layout: 'app',
+    roles: CLIENTE,
+    page: misPedidosPage
+  },
+  {
+    path: RUTAS.MIS_SOLICITUDES,
+    title: 'Mis solicitudes',
+    layout: 'app',
+    roles: CLIENTE,
+    page: misSolicitudesPage
   },
   {
     path: '*',
